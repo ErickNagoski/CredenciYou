@@ -1,6 +1,6 @@
 import React from "react";
 import { TouchableOpacity } from "react-native";
-import { Button, Dimensions, TouchableWithoutFeedback } from "react-native";
+import { Button, Dimensions, TouchableWithoutFeedback, Image } from "react-native";
 import { StyleSheet, View, Text } from "react-native";
 import { Fontisto } from "@expo/vector-icons";
 
@@ -18,8 +18,14 @@ export function Header() {
                 <Text>100%</Text>
             </View>
             <View>
-                <TouchableOpacity style={styles.accontButton}>
-
+                <TouchableOpacity 
+                onPress={()=>{alert("pagina da conta de usuário")}}
+                style={styles.accontButton}>
+                    <Image
+                    style={styles.image}
+                        source={require("../assets/foto.png")}
+                        resizeMode="contain"
+                    />
                 </TouchableOpacity>
             </View>
 
@@ -42,7 +48,8 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 25,
-        borderWidth: 2,
+        justifyContent:"center",
+        alignItems:"center"
     },
     AccontButtonView: {
 
@@ -54,6 +61,10 @@ const styles = StyleSheet.create({
         justifyContent:"space-evenly",
         alignItems:"center",
 
+    },
+    image:{
+        width:60,
+        height:60
     }
 
 })
