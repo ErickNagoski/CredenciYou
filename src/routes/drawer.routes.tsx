@@ -5,6 +5,7 @@ import { Dispositivos } from "../pages/Dispositivos";
 import { Cards } from "../pages/Cards";
 import { Health } from "../pages/Health";
 import { Settings } from "../pages/Settings";
+import { User } from "../pages/User";
 
 
 
@@ -38,6 +39,12 @@ const AppRoutes: React.FC = ()=>{
             name="Configurações"
             component={Settings}
             />
+            
+            <drawerRoutes.Screen
+            name="User"
+            component={User}
+            />
+            
 
         </drawerRoutes.Navigator>
 

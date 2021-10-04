@@ -1,73 +1,217 @@
 import { AntDesign, Fontisto, Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Platform, SafeAreaView, StatusBar, StyleSheet, Text, View, TouchableWithoutFeedback } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Platform, SafeAreaView, StatusBar, StyleSheet, Text, View, TouchableWithoutFeedback, FlatList, ActivityIndicator, Modal, Image } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Header } from "../components/Header";
+import { Ticket, TicketProps } from "../components/Ticket";
+
+import firebase from "../services/firebaseconnection";
+import moment from "moment";
+
+
+interface UserProps {
+    uuid: string,
+    name: string,
+    cpf: string,
+    age: number,
+    phone: string,
+    creditLimit: number,
+    walletBalance: number,
+    tickets?: TicketProps[]
+
+}
 
 export function Home() {
-    return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.wrapper}>
-                <Header />
-                <View style={styles.content}>
+    moment.locale("pt-br")
 
-                    <View style={styles.walletContainer}>
-                        <TouchableOpacity
-                            style={styles.smartwatch}
-                            onPress={() => { alert("pagina da carteira") }}>
-                            <Ionicons
-                                name="wallet-outline"
-                                size={40}
-                            />
-                            {/* <Text style={styles.smartwatchTitle}>Carteira</Text> */}
-                            <View>
-                                <Text>Saldo : 1000</Text>
-                                <Text>Limite de Crédito: 500</Text>
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.smartwatchContainer}>
-                        <TouchableOpacity
-                            style={styles.smartwatch}
-                            onPress={() => { alert("pagina da pulseira") }}>
-                            <Ionicons
-                                name='watch-outline'
-                                size={40}
-                            />
-                            <Text style={styles.smartwatchTitle}>Minha Pulseira</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.creditCardContainer}>
-                        <Text>Meus cartões</Text>
-                        <View style={styles.creditCardList}>
-                            <View style={styles.creditCard}>
+    const [user, setUser] = useState<UserProps>();
+    const [loading, setLoading] = useState(true);
 
-                                <Text>Erick Nagoski</Text>
-                                <Text>5322 8761 0219 1494</Text>
-                                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                                    <Text>22/07/2022</Text>
-                                    <Text>821</Text>
-                                    <Fontisto name="mastercard" size={24} color="black" />
+    const [showHealthModal, setShowHealthModal] = useState(true);
+
+    useEffect(() => {
+        var userData: UserProps = {
+            uuid: "",
+            name: "",
+            cpf: "",
+            age: 0,
+            phone: "",
+            creditLimit: 0,
+            walletBalance: 0,
+
+        }
+        async function loadData() {
+            await firebase.database().ref(`users/1`).once("value", (snapshot) => {
+                userData = {
+                    uuid: "1",
+                    name: snapshot.val().nome,
+                    cpf: snapshot.val().cpf,
+                    age: Number(snapshot.val().idade),
+                    phone: snapshot.val().telefone,
+                    creditLimit: Number(snapshot.val().limite_credito),
+                    walletBalance: Number(snapshot.val().saldo),
+                }
+            })
+
+            var tickets: TicketProps[] = []
+            async function loadTickets() {
+                await firebase.database().ref("tickets/1").on("value", (snapshot) => {
+                    snapshot.forEach((childItem) => {
+                        let data: TicketProps = {
+                            id: "" + Math.random(),
+                            place: childItem.val().place,
+                            value: Number(childItem.val().value),
+                            validity: moment(new Date).locale("pt-br").format("L"),
+                        }
+                        tickets.push(data)
+                    })
+                })
+                setLoading(false);
+            }
+            loadTickets();
+            userData.tickets = tickets;
+            setUser(userData)
+
+            user?.tickets?.forEach(element => {
+                console.log(element)
+            });
+            console.log(user?.tickets)
+
+
+        }
+        loadData();
+    }, [])
+
+    if (loading) {
+        return (
+            <ActivityIndicator
+                style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+                size="large"
+                color="#000000"
+            />
+        )
+    } else {
+
+        return (
+            <SafeAreaView style={styles.container}>
+                <Modal
+                    style={styles.healthModal}
+                    visible={showHealthModal}
+                    transparent={true}
+                >
+                     <TouchableWithoutFeedback 
+                            onPress={() => { setShowHealthModal(false) }}>
+                        <View style={styles.outsideHealthModal}/>
+                    </TouchableWithoutFeedback>
+
+                    <View style={styles.healthModalContent}>
+                        <View style={styles.healthTextView}>
+                            <Text style={styles.healthText}>Média ❤ {"\n"} 86</Text>
+                            <Text style={styles.healthText}>Minimo ❤ {"\n"} 50</Text>
+                            <Text style={styles.healthText}>Maximo ❤ {"\n"} 180</Text>
+                        </View>
+                        <View style={styles.graphicView}>
+                            <Image
+                                style={styles.graphicImage}
+                                source={require("../assets/grafico.png")}
+                                resizeMode="contain"
+                            />
+                        </View>
+                    </View>
+                    <TouchableWithoutFeedback 
+                            onPress={() => { setShowHealthModal(false) }}>
+                        <View style={styles.outsideHealthModal}/>
+                    </TouchableWithoutFeedback>
+                </Modal>
+
+
+                <View style={styles.wrapper}>
+                    <Header />
+                    <View style={styles.content}>
+
+                        <View style={styles.walletContainer}>
+                            <TouchableOpacity
+                                style={styles.smartwatch}
+                                onPress={() => { alert("pagina da carteira") }}>
+                                <Ionicons
+                                    name="wallet-outline"
+                                    size={40}
+                                />
+                                {/* <Text style={styles.smartwatchTitle}>Carteira</Text> */}
+                                <View>
+                                    <Text>Saldo : {user?.walletBalance}</Text>
+                                    <Text>Limite de Crédito: {user?.creditLimit}</Text>
                                 </View>
-                            </View>
-                            <View style={styles.creditCard}>
-                                <TouchableOpacity
-                                    style={styles.addCreditCardButton}
-                                >
-                                    <AntDesign name="plus" size={24} color="black" />
-                                </TouchableOpacity>
-                            </View>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.smartwatchContainer}>
+                            <TouchableOpacity
+                                style={styles.smartwatch}
+                                onPress={() => { alert("pagina da pulseira") }}>
+                                <Ionicons
+                                    name='watch-outline'
+                                    size={40}
+                                />
+                                <Text style={styles.smartwatchTitle}>Minha Pulseira</Text>
+                            </TouchableOpacity>
                         </View>
 
+                        <View style={styles.smartwatchContainer}>
+                            <TouchableOpacity
+                                style={styles.smartwatch}
+                                onPress={() => { setShowHealthModal(! showHealthModal) }}>
+                                <Ionicons
+                                    name='heart-outline'
+                                    size={40}
+                                />
+                                <Text style={styles.smartwatchTitle}>Minha Saúde</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.creditCardContainer}>
+                            <Text style={styles.title}>Meus cartões</Text>
+                            <View style={styles.creditCardList}>
+                                <View style={styles.creditCard}>
 
-                    </View>
-                    <View style={styles.ticketsContainer}>
-                        <Text>Meus tickets</Text>
+                                    <Text>Erick Nagoski</Text>
+                                    <Text>5322 8761 0219 1494</Text>
+                                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                                        <Text>22/07/2022</Text>
+                                        <Text>821</Text>
+                                        <Fontisto name="mastercard" size={24} color="black" />
+                                    </View>
+                                </View>
+                                <View style={[styles.creditCard, { alignItems: "center" }]}>
+                                    <TouchableOpacity
+                                        style={styles.addCreditCardButton}
+                                    >
+                                        <AntDesign name="plus" size={24} color="black" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+
+                        </View>
+                        <View style={styles.ticketsContainer}>
+                            <Text style={[styles.title, { marginBottom: 10 }]}>Meus tickets</Text>
+                            <FlatList
+                                style={styles.ticketsList}
+                                data={user?.tickets}
+                                keyExtractor={(item) => item.id}
+                                renderItem={({ item }) => (
+
+                                    <Ticket
+                                        {...item}
+                                    />
+
+                                )}
+
+                            />
+                        </View>
                     </View>
                 </View>
-            </View>
-        </SafeAreaView>
-    )
+            </SafeAreaView>
+        )
+    }
 }
 
 const styles = StyleSheet.create({
@@ -77,11 +221,17 @@ const styles = StyleSheet.create({
     wrapper: {
         flex: 1,
         marginTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+        paddingHorizontal: 15,
     },
     content: {
 
         alignItems: "center",
         flex: 1,
+    },
+
+    title: {
+        fontSize: 18,
+
     },
 
     walletContainer: {
@@ -110,41 +260,92 @@ const styles = StyleSheet.create({
     },
     creditCardContainer: {
         width: "100%",
-        height: 120,
+        height: 200,
         borderWidth: 2,
-        justifyContent: "flex-start",
+        justifyContent: "space-evenly",
         alignItems: "flex-start",
         paddingLeft: 10
 
     },
     creditCard: {
-        width: "50%",
+        width: 200,
         height: 90,
         borderWidth: 1,
         padding: 5,
         justifyContent: "space-around",
         marginHorizontal: 10,
-        borderRadius:10,
+        borderRadius: 10,
 
     },
     creditCardList: {
         flexDirection: "row",
+        height: 150,
+        alignItems: "center"
     },
+
     addCreditCardButton: {
         width: 50,
         height: 50,
         borderRadius: 25,
         backgroundColor: "#b2b2b2",
         justifyContent: "center",
-        alignContent: "center"
+        alignItems: "center"
     },
     ticketsContainer: {
-        marginTop:10,
+        marginTop: 10,
         width: "100%",
-        height: 200,
+        height: 300,
         alignItems: "flex-start",
         borderWidth: 1,
-        padding:10,
+        padding: 10,
     },
+    ticketsList: {
+        width: "100%"
+    },
+
+    healthModal: {
+        flex: 1,
+        backgroundColor: "rgba(200,200,200,0.4)",
+    },
+
+    outsideHealthModal: {
+        flex: 1,
+        backgroundColor: "rgba(200,200,200,0.4)",
+        justifyContent: "center",
+        alignItems: "center"
+    },
+
+    healthModalContent: {
+        flex: 3,
+        marginHorizontal:15,
+        padding: 15,
+        backgroundColor: "#ffffff",
+        justifyContent: "space-evenly",
+        alignItems: 'flex-start'
+    },
+
+    graphicView: {
+        width: "100%",
+        alignItems: "center"
+    },
+    graphicImage: {
+        width: 400,
+        height: 200
+    },
+    healthTextView: {
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+        width: "100%"
+    },
+
+    healthText: {
+        fontSize: 18,
+        marginVertical: 10,
+        textAlign: "center",
+        lineHeight: 30,
+        fontWeight: "bold"
+    },
+
     
+
 })
