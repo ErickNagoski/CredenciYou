@@ -25,62 +25,87 @@ export function Home() {
     moment.locale("pt-br")
 
     const [user, setUser] = useState<UserProps>();
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [userUid, setUserUid] = useState("")
 
-    const [showHealthModal, setShowHealthModal] = useState(true);
+    const [showHealthModal, setShowHealthModal] = useState(false);
 
-    useEffect(() => {
-        var userData: UserProps = {
-            uuid: "",
-            name: "",
-            cpf: "",
-            age: 0,
-            phone: "",
-            creditLimit: 0,
-            walletBalance: 0,
-
+    useEffect(()=>{
+        async function getUser(){
+           let userData  = await firebase.auth().currentUser;
+            console.log("user: " + userData);
         }
-        async function loadData() {
-            await firebase.database().ref(`users/1`).once("value", (snapshot) => {
-                userData = {
-                    uuid: "1",
-                    name: snapshot.val().nome,
-                    cpf: snapshot.val().cpf,
-                    age: Number(snapshot.val().idade),
-                    phone: snapshot.val().telefone,
-                    creditLimit: Number(snapshot.val().limite_credito),
-                    walletBalance: Number(snapshot.val().saldo),
-                }
-            })
+        getUser()
+    },[])
 
-            var tickets: TicketProps[] = []
-            async function loadTickets() {
-                await firebase.database().ref("tickets/1").on("value", (snapshot) => {
-                    snapshot.forEach((childItem) => {
-                        let data: TicketProps = {
-                            id: "" + Math.random(),
-                            place: childItem.val().place,
-                            value: Number(childItem.val().value),
-                            validity: moment(new Date).locale("pt-br").format("L"),
-                        }
-                        tickets.push(data)
-                    })
-                })
-                setLoading(false);
+    var userData: UserProps = {
+                uuid: `${userUid}`,
+                name: "Erick",
+                cpf: "123456",
+                age: 0,
+                phone: "1234567",
+                creditLimit: 0,
+                walletBalance: 0,
             }
-            loadTickets();
-            userData.tickets = tickets;
-            setUser(userData)
 
-            user?.tickets?.forEach(element => {
-                console.log(element)
-            });
-            console.log(user?.tickets)
+    // useEffect(() => {
+    //    async function loadUid(){
+    //        let userUid = await firebase.auth().currentUser?.uid;
+    //        console.log(userUid)
+    //        setUserUid(""+userUid)
+    //    }
+       
+    //     var userData: UserProps = {
+    //         uuid: `${userUid}`,
+    //         name: "",
+    //         cpf: "",
+    //         age: 0,
+    //         phone: "",
+    //         creditLimit: 0,
+    //         walletBalance: 0,
+
+    //     }
+    //     async function loadData() {
+    //         await firebase.database().ref(`users/1`).once("value", (snapshot) => {
+    //             userData = {
+    //                 uuid: userUid,
+    //                 name: snapshot.val().name,
+    //                 cpf: snapshot.val().cpf,
+    //                 age: Number(snapshot.val().age),
+    //                 phone: snapshot.val().phone,
+    //                 creditLimit: Number(snapshot.val().credit_limit),
+    //                 walletBalance: Number(snapshot.val().wallet_balace),
+    //             }
+    //         })
+
+    //         var tickets: TicketProps[] = []
+    //         async function loadTickets() {
+    //             await firebase.database().ref("tickets/1").on("value", (snapshot) => {
+    //                 snapshot.forEach((childItem) => {
+    //                     let data: TicketProps = {
+    //                         id: "" + Math.random(),
+    //                         place: childItem.val().place,
+    //                         value: Number(childItem.val().value),
+    //                         validity: moment(new Date).locale("pt-br").format("L"),
+    //                     }
+    //                     tickets.push(data)
+    //                 })
+    //             })
+    //             setLoading(false);
+    //         }
+    //         loadTickets();
+    //         userData.tickets = tickets;
+    //         setUser(userData)
+
+    //         user?.tickets?.forEach(element => {
+    //             console.log(element)
+    //         });
+    //         console.log(user?.tickets)
 
 
-        }
-        loadData();
-    }, [])
+    //     }
+    //     loadData();
+    // }, [])
 
     if (loading) {
         return (

@@ -3,8 +3,11 @@ import { TouchableOpacity } from "react-native";
 import { Button, Dimensions, TouchableWithoutFeedback, Image } from "react-native";
 import { StyleSheet, View, Text } from "react-native";
 import { Fontisto } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/core";
 
 export function Header() {
+const navigation = useNavigation()
+
     return (
 
         <View style={styles.container}>
@@ -19,7 +22,7 @@ export function Header() {
             </View>
             <View>
                 <TouchableOpacity 
-                onPress={()=>{alert("pagina da conta de usuário")}}
+                onPress={()=>{navigation.navigate("User")}}
                 style={styles.accontButton}>
                     <Image
                     style={styles.image}
