@@ -1,4 +1,4 @@
-import { AntDesign, Fontisto, Ionicons } from "@expo/vector-icons";
+import { AntDesign, FontAwesome, Fontisto, Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import { Platform, SafeAreaView, StatusBar, StyleSheet, Text, View, TouchableWithoutFeedback, FlatList, ActivityIndicator, Modal, Image } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -7,6 +7,7 @@ import { Ticket, TicketProps } from "../components/Ticket";
 
 import firebase from "../services/firebaseconnection";
 import moment from "moment";
+import { useNavigation } from "@react-navigation/core";
 
 
 interface UserProps {
@@ -30,23 +31,25 @@ export function Home() {
 
     const [showHealthModal, setShowHealthModal] = useState(false);
 
-    useEffect(()=>{
-        async function getUser(){
-           let userData  = await firebase.auth().currentUser;
+    const navigation = useNavigation()
+
+    useEffect(() => {
+        async function getUser() {
+            let userData = await firebase.auth().currentUser;
             console.log("user: " + userData);
         }
         getUser()
-    },[])
+    }, [])
 
     var userData: UserProps = {
-                uuid: `${userUid}`,
-                name: "Erick",
-                cpf: "123456",
-                age: 0,
-                phone: "1234567",
-                creditLimit: 0,
-                walletBalance: 0,
-            }
+        uuid: `${userUid}`,
+        name: "Erick",
+        cpf: "123456",
+        age: 0,
+        phone: "1234567",
+        creditLimit: 0,
+        walletBalance: 0,
+    }
 
     // useEffect(() => {
     //    async function loadUid(){
@@ -54,7 +57,7 @@ export function Home() {
     //        console.log(userUid)
     //        setUserUid(""+userUid)
     //    }
-       
+
     //     var userData: UserProps = {
     //         uuid: `${userUid}`,
     //         name: "",
@@ -124,9 +127,9 @@ export function Home() {
                     visible={showHealthModal}
                     transparent={true}
                 >
-                     <TouchableWithoutFeedback 
-                            onPress={() => { setShowHealthModal(false) }}>
-                        <View style={styles.outsideHealthModal}/>
+                    <TouchableWithoutFeedback
+                        onPress={() => { setShowHealthModal(false) }}>
+                        <View style={styles.outsideHealthModal} />
                     </TouchableWithoutFeedback>
 
                     <View style={styles.healthModalContent}>
@@ -143,9 +146,9 @@ export function Home() {
                             />
                         </View>
                     </View>
-                    <TouchableWithoutFeedback 
-                            onPress={() => { setShowHealthModal(false) }}>
-                        <View style={styles.outsideHealthModal}/>
+                    <TouchableWithoutFeedback
+                        onPress={() => { setShowHealthModal(false) }}>
+                        <View style={styles.outsideHealthModal} />
                     </TouchableWithoutFeedback>
                 </Modal>
 
@@ -157,7 +160,7 @@ export function Home() {
                         <View style={styles.walletContainer}>
                             <TouchableOpacity
                                 style={styles.smartwatch}
-                                onPress={() => { alert("pagina da carteira") }}>
+                                onPress={() => {navigation.navigate("Wallet") }}>
                                 <Ionicons
                                     name="wallet-outline"
                                     size={40}
@@ -184,7 +187,7 @@ export function Home() {
                         <View style={styles.smartwatchContainer}>
                             <TouchableOpacity
                                 style={styles.smartwatch}
-                                onPress={() => { setShowHealthModal(! showHealthModal) }}>
+                                onPress={() => { setShowHealthModal(!showHealthModal) }}>
                                 <Ionicons
                                     name='heart-outline'
                                     size={40}
@@ -216,6 +219,15 @@ export function Home() {
 
 
                         </View>
+                        <View style={styles.smartwatchContainer}>
+                        <TouchableOpacity
+                        style={styles.smartwatch}
+                        onPress={()=>{navigation.navigate("TicketsShop")}}
+                        >
+                            <FontAwesome name="ticket" size={24} color="black" />
+                            <Text style={styles.smartwatchTitle}>Comprar tickets</Text>
+                        </TouchableOpacity>
+                        </View>
                         <View style={styles.ticketsContainer}>
                             <Text style={[styles.title, { marginBottom: 10 }]}>Meus tickets</Text>
                             <FlatList
@@ -232,6 +244,12 @@ export function Home() {
 
                             />
                         </View>
+                        <TouchableOpacity
+                        style={styles.smartwatch}
+                        onPress={()=>{navigation.navigate("TicketsShop")}}
+                        >
+                            <Text>Comprar tickets</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </SafeAreaView>
@@ -249,7 +267,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
     },
     content: {
-
         alignItems: "center",
         flex: 1,
     },
@@ -342,7 +359,7 @@ const styles = StyleSheet.create({
 
     healthModalContent: {
         flex: 3,
-        marginHorizontal:15,
+        marginHorizontal: 15,
         padding: 15,
         backgroundColor: "#ffffff",
         justifyContent: "space-evenly",
@@ -371,6 +388,6 @@ const styles = StyleSheet.create({
         fontWeight: "bold"
     },
 
-    
+
 
 })

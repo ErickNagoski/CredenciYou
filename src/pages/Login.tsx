@@ -1,28 +1,44 @@
 import { useNavigation } from "@react-navigation/core";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View, Keyboard, KeyboardAvoidingView, StatusBar, Dimensions, Button } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
+import { loadSession, saveSession, SessionProps } from "../services/asyncAuth";
 import firebase from "../services/firebaseconnection";
 
 
 export function Login() {
     const navigate = useNavigation()
 
-
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    
+
+    const [isLoading, setIsLoading] = useState(true);
+
+
+    useEffect(() => {
+        try {
+            const session: any = loadSession()
+            setEmail(session[0]);
+            setPassword(session[1])
+            setIsLoading(false);
+            navigate.navigate("Home");
+        } catch (error) {
+            setIsLoading(false);
+        }
+    }, [])
+
     async function handleLogin() {
         console.log("chamou")
         await firebase.auth().signInWithEmailAndPassword(email, password)
             .then((value) => {
                 firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                .then(()=>{
-                    console.log("salvou")
-                    navigate.navigate("Home",{})
-                })
-                .catch(()=>{console.log("error")})
-               
+                    .then(() => {
+                        console.log("salvou")
+                        saveSession(email,password)
+                        navigate.navigate("Home", {})
+                    })
+                    .catch(() => { console.log("error") })
+
             })
             .catch((error) => {
                 if (error.code === "auth/internal-error") {
@@ -41,55 +57,59 @@ export function Login() {
     }
 
     function handleCadastro() {
-        navigate.navigate("SignUp",{});
+        navigate.navigate("SignUp", {});
     }
 
+    if (isLoading) {
+        return (
+            <Text>texto</Text>
+        )
+    } else {
+        return (
+            <SafeAreaView style={styles.container}>
+                <KeyboardAvoidingView
+                    style={styles.container}
+                >
+                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                        <View style={styles.content}>
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView
-                style={styles.container}
-            //behavior={Platform.OS === "ios" ? "padding" : "height"}
-            >
+                            <View style={styles.form}>
+                                <View style={styles.inputContainer}>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Email"
+                                        onChangeText={(value) => { setEmail(value) }}
+                                    ></TextInput>
 
+                                </View>
 
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    <View style={styles.content}>
+                                <View style={styles.inputContainer}>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Senha"
+                                        onChangeText={(value) => { setPassword(value) }}
+                                    ></TextInput>
+                                </View>
 
-                        <View style={styles.form}>
-                            <View style={styles.inputContainer}>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Email"
-                                    onChangeText={(value) => { setEmail(value) }}
-                                ></TextInput>
+                                <View style={styles.buttonContainer}>
+                                    <Button title="Login" onPress={() => { handleLogin() }}></Button>
+                                    <TouchableOpacity onPress={() => { handleCadastro() }}>
+                                        <Text style={styles.buttonText}>Cadastrar</Text>
+                                    </TouchableOpacity>
 
+                                </View>
                             </View>
 
-                            <View style={styles.inputContainer}>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Senha"
-                                    onChangeText={(value) => { setPassword(value) }}
-                                ></TextInput>
-                            </View>
 
-                            <View style={styles.buttonContainer}>
-                                <Button title="Login" onPress={() => {handleLogin() }}></Button>
-                                <TouchableOpacity onPress={() => {handleCadastro() }}>
-                                    <Text style={styles.buttonText}>Cadastrar</Text>
-                                </TouchableOpacity>
-
-                            </View>
                         </View>
-
-
-                    </View>
-                </TouchableWithoutFeedback>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
-    )
+                    </TouchableWithoutFeedback>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        )
+    }
 }
+
+
 
 const styles = StyleSheet.create({
     container: {
@@ -153,11 +173,11 @@ const styles = StyleSheet.create({
 
     input: {
         width: "100%",
-        height:40,
+        height: 40,
         borderWidth: 1,
         borderRadius: 10,
         borderColor: "blue",
-        paddingHorizontal:10,
+        paddingHorizontal: 10,
         marginBottom: 10,
 
 

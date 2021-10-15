@@ -1,6 +1,7 @@
 import { useNavigation } from "@react-navigation/core";
 import React from "react";
 import { StyleSheet, SafeAreaView, View, Text, Image, Button, TouchableOpacity } from "react-native";
+import { clearStorage } from "../services/asyncAuth";
 import firebase from "../services/firebaseconnection"
 
 export function User() {
@@ -26,8 +27,9 @@ export function User() {
                     <TouchableOpacity
                         style={styles.button}
                         onPress={() => { 
-                            firebase.auth().signOut()
-                            navigation.navigate("Login")
+                            firebase.auth().signOut();
+                            clearStorage();
+                            navigation.navigate("Login");
                         }}
                     >
                         <Text>Sair da conta</Text>
