@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/core";
-import React, { useEffect, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View, Keyboard, KeyboardAvoidingView, StatusBar, Dimensions, Button } from "react-native";
+import React, { useEffect, useLayoutEffect, useState } from "react";
+import { SafeAreaView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View, Keyboard, KeyboardAvoidingView, StatusBar, Dimensions, Button, ActivityIndicator } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { loadSession, saveSession, SessionProps } from "../services/asyncAuth";
 import firebase from "../services/firebaseconnection";
@@ -15,16 +15,27 @@ export function Login() {
     const [isLoading, setIsLoading] = useState(true);
 
 
-    useEffect(() => {
-        try {
-            const session: any = loadSession()
-            setEmail(session[0]);
-            setPassword(session[1])
-            setIsLoading(false);
-            navigate.navigate("Home");
-        } catch (error) {
-            setIsLoading(false);
+    // firebase.auth().onAuthStateChanged(function (user) {
+    //     if (user) {
+
+    //     } else {
+
+    //     }
+    // });
+
+    useLayoutEffect(() => {
+        async function getUser() {
+            await firebase.auth().onAuthStateChanged(function (user) {
+                if (user) {
+                    console.log("user: " + user);
+
+                    navigate.navigate("Home");
+                } else {
+                    setIsLoading(false)
+                }
+            });
         }
+        getUser()
     }, [])
 
     async function handleLogin() {
@@ -34,7 +45,7 @@ export function Login() {
                 firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
                     .then(() => {
                         console.log("salvou")
-                        saveSession(email,password)
+                        saveSession(email, password)
                         navigate.navigate("Home", {})
                     })
                     .catch(() => { console.log("error") })
@@ -62,7 +73,9 @@ export function Login() {
 
     if (isLoading) {
         return (
-            <Text>texto</Text>
+            <ActivityIndicator
+                size="large"
+            />
         )
     } else {
         return (

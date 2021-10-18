@@ -39,7 +39,7 @@ const navigation = useNavigation()
 
 const styles = StyleSheet.create({
     container: {
-        width: Dimensions.get("screen").width,
+        width: Dimensions.get("screen").width *0.9,
         height: 60,
         flexDirection: "row",
         justifyContent:"space-between",

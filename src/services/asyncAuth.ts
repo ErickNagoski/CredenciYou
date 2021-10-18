@@ -33,8 +33,8 @@ export async function loadSession(): Promise<SessionProps> {
 }
 
 export async function clearStorage() {
-    // await AsyncStorage.removeItem("@Promoapp:list");
-    await AsyncStorage.setItem("@Credenciyou:Session", JSON.stringify([]));
+    // await AsyncStorage.setItem("@Credenciyou:Session", JSON.stringify([]));
+    await AsyncStorage.clear();
     console.log("Reset")
 
 }
