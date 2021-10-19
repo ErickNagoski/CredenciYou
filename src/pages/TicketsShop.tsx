@@ -42,31 +42,37 @@ export default function TicketsShop() {
         },
     ]
 
-   async function handleBuyTicket(ticket:TicketProps){
-       await firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/tickets").child(`${ticket.id}`).set({
-           id:ticket.id,
-           place: ticket.place,
-           value : ticket.value,
-           validity: ticket.validity,
-       }).then(()=>{
-           Alert.alert("Sucesso!")
-       }).catch(()=>{
-           Alert.alert("Erro!")
-       })
+    async function handleBuyTicket(ticket: TicketProps) {
+        await firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/tickets").child(`${ticket.id}`).set({
+            id: ticket.id,
+            place: ticket.place,
+            value: ticket.value,
+            validity: ticket.validity,
+        }).then(() => {
+            Alert.alert("Sucesso!")
+        }).catch(() => {
+            Alert.alert("Erro!")
+        })
 
-       firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/wallet_balance").once("value", (snapshot)=>{
-        firebase.database().ref("users").child("n4IAC9cWAjMUE7HkTG0sxdXV67u1").update({
-            wallet_balance: snapshot.val() - ticket.value
-       })
+        firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/wallet_balance").once("value", (snapshot) => {
+            firebase.database().ref("users").child("n4IAC9cWAjMUE7HkTG0sxdXV67u1").update({
+                wallet_balance: snapshot.val() - ticket.value
+            })
 
-       firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/tickets").child(`${ticket.id}`).set({
-           place: ticket.place,
-           value: ticket.value,
-           validity: ticket.validity,
-       })
-       
-   })
-}
+            firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/tickets").child(`${ticket.id}`).set({
+                place: ticket.place,
+                value: ticket.value,
+                validity: ticket.validity,
+            })
+
+            firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/outGoing").child(`${Math.floor(Math.random()*100)}`).set({
+                title: ticket.place,
+                value: ticket.value,
+                date: ticket.validity,
+            })
+
+        })
+    }
 
     return (
         < SafeAreaView style={styles.body}>
@@ -88,7 +94,7 @@ export default function TicketsShop() {
                                 </View>
                                 <TouchableOpacity
                                     style={styles.button}
-                                    onPress={()=>{handleBuyTicket(item)}}
+                                    onPress={() => { handleBuyTicket(item) }}
                                 >
                                     <FontAwesome name="ticket" size={32} color="black" />
                                 </TouchableOpacity>

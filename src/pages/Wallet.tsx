@@ -13,7 +13,7 @@ export default function Wallet() {
     moment.locale("pt-br")
     const [isVisible, setIsVisible] = useState(false);
     const [isActive, setIsActive] = useState(false);
-    const [showAddCreditCardModal, setShowAddCreditCardModal] = useState(true)
+    const [showAddCreditCardModal, setShowAddCreditCardModal] = useState(false)
 
     const [name, setName] = useState("");
     const [code, setCode] = useState("");
@@ -22,7 +22,8 @@ export default function Wallet() {
 
     const [user, setUser] = useState<any>();
 
-    const [creditCards, setCreditCards]=useState<any[]>();
+    const [creditCards, setCreditCards] = useState<any[]>();
+    const [outGoings, setOutGoings] = useState<outGoingProps[]>([])
 
     async function loadUserData(uuid: string) {
         await firebase.database().ref(`users/${uuid}`).once("value", (snapshot) => {
@@ -33,15 +34,33 @@ export default function Wallet() {
                 age: Number(snapshot.val().age),
                 phone: snapshot.val().phone,
                 creditLimit: Number(snapshot.val().credit_limit),
-                walletBalance: Number(snapshot.val().wallet_balace),
+                walletBalance: Number(snapshot.val().wallet_balance),
             }
             setUser(userData)
         })
     }
 
-     async function loadCreditCards(){
+    async function loadOutgoings() {
+        const outgoingData: outGoingProps[] = []
+        setOutGoings([]);
+        await firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/outGoing").on("value", (snapshot) => {
+            console.log("aqui")
+            snapshot.forEach((childItem) => {
+                let data: outGoingProps = {
+                    id: "" + Math.random(),
+                    title: childItem.val().title,
+                    value: childItem.val().value,
+                    date: `${new Date()}`
+                }
+                outgoingData.push(data)
+            })
+            setOutGoings(outgoingData)
+            // setLoading(false);
+        })
+    }
+
+    async function loadCreditCards() {
         await firebase.database().ref(`users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/creditCards`).on("value", (snapshot) => {
-            console.log(snapshot)
             const data: any = []
             snapshot.forEach((childItem) => {
                 data.push({
@@ -56,18 +75,11 @@ export default function Wallet() {
     }
 
     useLayoutEffect(() => {
-        async function getUser() {
-            await firebase.auth().onAuthStateChanged(function (user) {
-                if (user) {
-                    loadUserData(user.uid)
-                }
-            });
-        }
-        getUser()
-        console.log(user)
+        loadUserData("n4IAC9cWAjMUE7HkTG0sxdXV67u1");
         loadCreditCards();
-        
+        loadOutgoings()
     }, [])
+
 
     async function handleAddCreditCard() {
         await firebase.database().ref(`users/${user.uuid}/creditCards`).child(`${code}`).set({
@@ -88,34 +100,6 @@ export default function Wallet() {
         })
     }
 
-   
-    const outGoings: outGoingProps[] = [
-        {
-            id: "1",
-            title: "Ticket GNC Cinemas",
-            value: 35.00,
-            date: moment(new Date).locale("pt-br").format("L"),
-        },
-        {
-            id: "2",
-            title: "Ticket GNC Cinemas",
-            value: 35.00,
-            date: moment(new Date).locale("pt-br").format("L"),
-        },
-        {
-            id: "3",
-            title: "Ticket GNC Cinemas",
-            value: 35.00,
-            date: moment(new Date).locale("pt-br").format("L"),
-        },
-        {
-            id: "4",
-            title: "Ticket GNC Cinemas",
-            value: 35.00,
-            date: moment(new Date).locale("pt-br").format("L"),
-        },
-    ]
-
     return (
         <SafeAreaView style={styles.body}>
 
@@ -123,8 +107,8 @@ export default function Wallet() {
                 <Header />
 
                 <View style={styles.walletBalance}>
-                    <Text>Saldo: {isVisible && "1000"}{!isVisible && "*****"}</Text>
-                    <Text>Limite: {isVisible && "1000"}{!isVisible && "*****"}</Text>
+                    <Text>Saldo: {isVisible && user.walletBalance}{!isVisible && "*****"}</Text>
+                    <Text>Limite: {isVisible && user.creditLimit}{!isVisible && "*****"}</Text>
                     <TouchableOpacity
                         style={styles.visibleButton}
                         onPress={() => { setIsVisible(!isVisible) }}
@@ -236,7 +220,7 @@ export default function Wallet() {
                         placeholder="Chave de segurança"
                         onChangeText={(value) => { setSegureKey(value) }}
                     />
-                    <View style={{flexDirection:"row", justifyContent:"space-evenly", width:"100%"}}> 
+                    <View style={{ flexDirection: "row", justifyContent: "space-evenly", width: "100%" }}>
                         <Button title="Confirmar" onPress={handleAddCreditCard} />
                         <Button title="Cancelar" color="red" onPress={() => { setShowAddCreditCardModal(false) }} />
                     </View>
@@ -306,7 +290,7 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         justifyContent: "space-evenly",
         alignItems: "flex-start",
-        paddingLeft: 10
+        paddingVertical: 10,
 
     },
     creditCard: {

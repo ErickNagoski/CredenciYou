@@ -9,16 +9,18 @@ import firebase from "../services/firebaseconnection";
 import moment from "moment";
 import { useNavigation } from "@react-navigation/core";
 import { CreditCard } from "../components/CreditCard";
+import { getUser } from "../services/user.DAO";
+import { colors } from "../layout";
 
 
 export interface UserProps {
-    uuid: string,
+    uuid?: string,
     name: string,
     cpf: string,
     age: number,
     phone: string,
-    creditLimit: number,
-    walletBalance: number,
+    credit_Limit: number,
+    wallet_Balance: number,
     tickets?: TicketProps[]
 
 }
@@ -27,8 +29,10 @@ export function Home() {
     moment.locale("pt-br")
 
     const [user, setUser] = useState<UserProps>();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [userUid, setUserUid] = useState("")
+    const [creditCards, setCreditCards] = useState<any[]>();
+    const [tickets, setTickets] = useState<TicketProps[]>()
 
     const [showHealthModal, setShowHealthModal] = useState(false);
 
@@ -41,90 +45,60 @@ export function Home() {
         }
         getUser()
     }, [])
-
-    var userData: UserProps = {
-        uuid: `${userUid}`,
-        name: "Erick",
-        cpf: "123456",
-        age: 0,
-        phone: "1234567",
-        creditLimit: 0,
-        walletBalance: 0,
+    async function loadCreditCards() {
+        await firebase.database().ref(`users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/creditCards`).on("value", (snapshot) => {
+            const data: any = []
+            snapshot.forEach((childItem) => {
+                data.push({
+                    name: childItem.val().name,
+                    code: childItem.val().code,
+                    validity: childItem.val().validity,
+                    segureKey: childItem.val().segureKey,
+                })
+            })
+            setCreditCards(data)
+        })
     }
 
-    const creditCards = [
-        {
-            code: "5322 8761 0219 1425",
-            name: "Erick Nagoski",
-            validity: "22/07/2022",
-            segureKey: "821"
-        },
-        {
-            code: "5322 8761 0219 1494",
-            name: "Erick Nagoski",
-            validity: "22/07/2022",
-            segureKey: "821"
-        },
-    ]
-
-    // useEffect(() => {
-    //    async function loadUid(){
-    //        let userUid = await firebase.auth().currentUser?.uid;
-    //        console.log(userUid)
-    //        setUserUid(""+userUid)
-    //    }
-
-    //     var userData: UserProps = {
-    //         uuid: `${userUid}`,
-    //         name: "",
-    //         cpf: "",
-    //         age: 0,
-    //         phone: "",
-    //         creditLimit: 0,
-    //         walletBalance: 0,
-
-    //     }
-    //     async function loadData() {
-    //         await firebase.database().ref(`users/1`).once("value", (snapshot) => {
-    //             userData = {
-    //                 uuid: userUid,
-    //                 name: snapshot.val().name,
-    //                 cpf: snapshot.val().cpf,
-    //                 age: Number(snapshot.val().age),
-    //                 phone: snapshot.val().phone,
-    //                 creditLimit: Number(snapshot.val().credit_limit),
-    //                 walletBalance: Number(snapshot.val().wallet_balace),
-    //             }
-    //         })
-
-    //         var tickets: TicketProps[] = []
-    //         async function loadTickets() {
-    //             await firebase.database().ref("tickets/1").on("value", (snapshot) => {
-    //                 snapshot.forEach((childItem) => {
-    //                     let data: TicketProps = {
-    //                         id: "" + Math.random(),
-    //                         place: childItem.val().place,
-    //                         value: Number(childItem.val().value),
-    //                         validity: moment(new Date).locale("pt-br").format("L"),
-    //                     }
-    //                     tickets.push(data)
-    //                 })
-    //             })
-    //             setLoading(false);
-    //         }
-    //         loadTickets();
-    //         userData.tickets = tickets;
-    //         setUser(userData)
-
-    //         user?.tickets?.forEach(element => {
-    //             console.log(element)
-    //         });
-    //         console.log(user?.tickets)
+    useEffect(() => {  
+        async function loadData() {
+            await firebase.database().ref(`users/n4IAC9cWAjMUE7HkTG0sxdXV67u1`).on("value", (snapshot) => {
+                const userData = {
+                    uuid: userUid,
+                    name: snapshot.val().name,
+                    cpf: snapshot.val().cpf,
+                    age: Number(snapshot.val().age),
+                    phone: snapshot.val().phone,
+                    credit_Limit: Number(snapshot.val().credit_limit),
+                    wallet_Balance: Number(snapshot.val().wallet_balance),
+                }
+                setUser(userData);
+            })
 
 
-    //     }
-    //     loadData();
-    // }, [])
+            async function loadTickets() {
+                const ticketsData: TicketProps[] = []
+                setTickets([])
+                await firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/tickets").on("value", (snapshot) => {
+                    snapshot.forEach((childItem) => {
+                        let data: TicketProps = {
+                            id: "" + Math.random(),
+                            place: childItem.val().place,
+                            value: Number(childItem.val().value),
+                            validity: childItem.val().validity,
+                        }
+                        ticketsData.push(data)
+                    })
+                    setTickets(ticketsData)
+                    setLoading(false);
+                })
+            }
+            loadTickets();
+        }
+        loadData();
+        loadCreditCards();
+
+    }, [])
 
     if (loading) {
         return (
@@ -135,7 +109,6 @@ export function Home() {
             />
         )
     } else {
-
         return (
             <SafeAreaView style={styles.container}>
                 <Modal
@@ -183,8 +156,8 @@ export function Home() {
                                 />
                                 {/* <Text style={styles.smartwatchTitle}>Carteira</Text> */}
                                 <View>
-                                    <Text>Saldo : {user?.walletBalance}</Text>
-                                    <Text>Limite de Crédito: {user?.creditLimit}</Text>
+                                    <Text>Saldo : {user?.wallet_Balance}</Text>
+                                    <Text>Limite de Crédito: {user?.credit_Limit}</Text>
                                 </View>
                             </TouchableOpacity>
                         </View>
@@ -241,18 +214,14 @@ export function Home() {
                             <Text style={[styles.title, { marginBottom: 10 }]}>Meus tickets</Text>
                             <FlatList
                                 style={styles.ticketsList}
-                                data={user?.tickets}
+                                data={tickets}
                                 keyExtractor={(item) => item.id}
                                 renderItem={({ item }) => (
-
                                     <Ticket
                                         {...item}
                                     />
-
                                 )}
-
                             />
-                            
                         </View>
                         <TouchableOpacity
                             style={styles.smartwatch}
@@ -274,7 +243,6 @@ const styles = StyleSheet.create({
     wrapper: {
         flex: 1,
         marginTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-        paddingHorizontal: 15,
     },
     content: {
         alignItems: "center",
@@ -327,8 +295,8 @@ const styles = StyleSheet.create({
         justifyContent: "space-around",
         marginHorizontal: 10,
         borderRadius: 10,
-
     },
+
     creditCardList: {
         flexDirection: "row",
         height: 150,
@@ -346,7 +314,6 @@ const styles = StyleSheet.create({
     ticketsContainer: {
         marginTop: 10,
         width: "100%",
-        height: 300,
         alignItems: "flex-start",
         borderWidth: 1,
         padding: 10,
