@@ -1,6 +1,6 @@
 import { AntDesign, FontAwesome, Fontisto, Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
-import { Platform, SafeAreaView, StatusBar, StyleSheet, Text, View, TouchableWithoutFeedback, FlatList, ActivityIndicator, Modal, Image } from "react-native";
+import { Platform, SafeAreaView, StatusBar, StyleSheet, Text, View, TouchableWithoutFeedback, FlatList, ActivityIndicator, Modal, Image, Alert } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Header } from "../components/Header";
 import { Ticket, TicketProps } from "../components/Ticket";
@@ -8,9 +8,10 @@ import { Ticket, TicketProps } from "../components/Ticket";
 import firebase from "../services/firebaseconnection";
 import moment from "moment";
 import { useNavigation } from "@react-navigation/core";
+import { CreditCard } from "../components/CreditCard";
 
 
-interface UserProps {
+export interface UserProps {
     uuid: string,
     name: string,
     cpf: string,
@@ -50,6 +51,21 @@ export function Home() {
         creditLimit: 0,
         walletBalance: 0,
     }
+
+    const creditCards = [
+        {
+            code: "5322 8761 0219 1425",
+            name: "Erick Nagoski",
+            validity: "22/07/2022",
+            segureKey: "821"
+        },
+        {
+            code: "5322 8761 0219 1494",
+            name: "Erick Nagoski",
+            validity: "22/07/2022",
+            segureKey: "821"
+        },
+    ]
 
     // useEffect(() => {
     //    async function loadUid(){
@@ -160,7 +176,7 @@ export function Home() {
                         <View style={styles.walletContainer}>
                             <TouchableOpacity
                                 style={styles.smartwatch}
-                                onPress={() => {navigation.navigate("Wallet") }}>
+                                onPress={() => { navigation.navigate("Wallet") }}>
                                 <Ionicons
                                     name="wallet-outline"
                                     size={40}
@@ -198,35 +214,28 @@ export function Home() {
                         <View style={styles.creditCardContainer}>
                             <Text style={styles.title}>Meus cartões</Text>
                             <View style={styles.creditCardList}>
-                                <View style={styles.creditCard}>
+                                <FlatList
+                                    data={creditCards}
+                                    keyExtractor={(item) => item.code}
+                                    renderItem={({ item }) => (
 
-                                    <Text>Erick Nagoski</Text>
-                                    <Text>5322 8761 0219 1494</Text>
-                                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                                        <Text>22/07/2022</Text>
-                                        <Text>821</Text>
-                                        <Fontisto name="mastercard" size={24} color="black" />
-                                    </View>
-                                </View>
-                                <View style={[styles.creditCard, { alignItems: "center" }]}>
-                                    <TouchableOpacity
-                                        style={styles.addCreditCardButton}
-                                    >
-                                        <AntDesign name="plus" size={24} color="black" />
-                                    </TouchableOpacity>
-                                </View>
+                                        <CreditCard data={item} />
+
+                                    )}
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                />
                             </View>
-
-
                         </View>
+
                         <View style={styles.smartwatchContainer}>
-                        <TouchableOpacity
-                        style={styles.smartwatch}
-                        onPress={()=>{navigation.navigate("TicketsShop")}}
-                        >
-                            <FontAwesome name="ticket" size={24} color="black" />
-                            <Text style={styles.smartwatchTitle}>Comprar tickets</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.smartwatch}
+                                onPress={() => { navigation.navigate("TicketsShop") }}
+                            >
+                                <FontAwesome name="ticket" size={24} color="black" />
+                                <Text style={styles.smartwatchTitle}>Comprar tickets</Text>
+                            </TouchableOpacity>
                         </View>
                         <View style={styles.ticketsContainer}>
                             <Text style={[styles.title, { marginBottom: 10 }]}>Meus tickets</Text>
@@ -243,10 +252,11 @@ export function Home() {
                                 )}
 
                             />
+                            
                         </View>
                         <TouchableOpacity
-                        style={styles.smartwatch}
-                        onPress={()=>{navigation.navigate("TicketsShop")}}
+                            style={styles.smartwatch}
+                            onPress={() => { navigation.navigate("TicketsShop") }}
                         >
                             <Text>Comprar tickets</Text>
                         </TouchableOpacity>

@@ -5,8 +5,8 @@ export interface SessionProps{
     password:"string",
 }
 
-export async function saveSession(email: string, password: string) {
-    let storageSession = [email, password];
+export async function saveSession(email: string, password: string, uuid:any) {
+    let storageSession = [email, password, uuid];
     
     //transforma a lista em String JSON novamente
     const jsonString = (JSON.stringify(storageSession))

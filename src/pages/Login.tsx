@@ -27,8 +27,7 @@ export function Login() {
         async function getUser() {
             await firebase.auth().onAuthStateChanged(function (user) {
                 if (user) {
-                    console.log("user: " + user);
-
+                    saveSession(email, password, user?.uid)
                     navigate.navigate("Home");
                 } else {
                     setIsLoading(false)
@@ -42,10 +41,9 @@ export function Login() {
         console.log("chamou")
         await firebase.auth().signInWithEmailAndPassword(email, password)
             .then((value) => {
+                saveSession(email, password, value.user?.uid)
                 firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                    .then(() => {
-                        console.log("salvou")
-                        saveSession(email, password)
+                    .then((value) => {
                         navigate.navigate("Home", {})
                     })
                     .catch(() => { console.log("error") })

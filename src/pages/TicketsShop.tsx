@@ -4,7 +4,7 @@ import { Ticket, TicketProps } from "../components/Ticket";
 import moment from "moment";
 import { Header } from "../components/Header";
 import { FontAwesome } from "@expo/vector-icons";
-
+import firebase from "../services/firebaseconnection"
 
 
 export default function TicketsShop() {
@@ -42,6 +42,32 @@ export default function TicketsShop() {
         },
     ]
 
+   async function handleBuyTicket(ticket:TicketProps){
+       await firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/tickets").child(`${ticket.id}`).set({
+           id:ticket.id,
+           place: ticket.place,
+           value : ticket.value,
+           validity: ticket.validity,
+       }).then(()=>{
+           Alert.alert("Sucesso!")
+       }).catch(()=>{
+           Alert.alert("Erro!")
+       })
+
+       firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/wallet_balance").once("value", (snapshot)=>{
+        firebase.database().ref("users").child("n4IAC9cWAjMUE7HkTG0sxdXV67u1").update({
+            wallet_balance: snapshot.val() - ticket.value
+       })
+
+       firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/tickets").child(`${ticket.id}`).set({
+           place: ticket.place,
+           value: ticket.value,
+           validity: ticket.validity,
+       })
+       
+   })
+}
+
     return (
         < SafeAreaView style={styles.body}>
             <View style={styles.wrapper}>
@@ -62,6 +88,7 @@ export default function TicketsShop() {
                                 </View>
                                 <TouchableOpacity
                                     style={styles.button}
+                                    onPress={()=>{handleBuyTicket(item)}}
                                 >
                                     <FontAwesome name="ticket" size={32} color="black" />
                                 </TouchableOpacity>

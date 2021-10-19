@@ -27,7 +27,7 @@ export function SignUp() {
                     age: idade,
                     cpf: cpf,
                     phone:telefone,
-                    wallet_balace:0,
+                    wallet_balance:0,
                     credit_limit:0,
                     
 
