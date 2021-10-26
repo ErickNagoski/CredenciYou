@@ -2,8 +2,10 @@ import { useNavigation } from "@react-navigation/core";
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import { SafeAreaView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View, Keyboard, KeyboardAvoidingView, StatusBar, Dimensions, Button, ActivityIndicator } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
+import { useUserData } from "../hooks/useUserData";
 import { loadSession, saveSession, SessionProps } from "../services/asyncAuth";
 import firebase from "../services/firebaseconnection";
+import { UserProps } from "./Home";
 
 
 export function Login() {
@@ -14,34 +16,42 @@ export function Login() {
 
     const [isLoading, setIsLoading] = useState(true);
 
+    // const { userData, setUserData } = useUserData();
 
-    // firebase.auth().onAuthStateChanged(function (user) {
-    //     if (user) {
-
-    //     } else {
-
-    //     }
-    // });
+    async function saveUser(uuid: string) {
+        await firebase.database().ref(`users/${uuid}`).once("value", (snapshot) => {
+            const userData: UserProps =
+            {
+                uuid: uuid,
+                name: snapshot.val().name,
+                cpf: snapshot.val().cpf,
+                email: snapshot.val().email,
+                age: Number(snapshot.val().age),
+                phone: snapshot.val().phone,
+                credit_Limit: Number(snapshot.val().credit_limit),
+                wallet_Balance: Number(snapshot.val().wallet_balance)
+            }
+            saveSession(userData);
+        })
+    }
 
     useLayoutEffect(() => {
         async function getUser() {
-            await firebase.auth().onAuthStateChanged(function (user) {
-                if (user) {
-                    saveSession(email, password, user?.uid)
+            const user  = await loadSession();
+                if (user?.uuid !== undefined && user?.uuid !== null) {
+                    saveUser(user.uuid);
                     navigate.navigate("Home");
                 } else {
                     setIsLoading(false)
                 }
-            });
         }
         getUser()
     }, [])
 
     async function handleLogin() {
-        console.log("chamou")
         await firebase.auth().signInWithEmailAndPassword(email, password)
             .then((value) => {
-                saveSession(email, password, value.user?.uid)
+                saveUser(value.user?.uid)
                 firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
                     .then((value) => {
                         navigate.navigate("Home", {})
@@ -107,11 +117,8 @@ export function Login() {
                                     <TouchableOpacity onPress={() => { handleCadastro() }}>
                                         <Text style={styles.buttonText}>Cadastrar</Text>
                                     </TouchableOpacity>
-
                                 </View>
                             </View>
-
-
                         </View>
                     </TouchableWithoutFeedback>
                 </KeyboardAvoidingView>
@@ -119,8 +126,6 @@ export function Login() {
         )
     }
 }
-
-
 
 const styles = StyleSheet.create({
     container: {
@@ -152,7 +157,6 @@ const styles = StyleSheet.create({
     },
     Image: {
         height: false ? 50 : Dimensions.get('window').width * 0.7,
-        // Dimensions.get('window').width * 0.5
     },
 
     inputContainer: {

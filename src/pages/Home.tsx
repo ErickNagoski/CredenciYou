@@ -1,6 +1,6 @@
 import { AntDesign, FontAwesome, Fontisto, Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
-import { Platform, SafeAreaView, StatusBar, StyleSheet, Text, View, TouchableWithoutFeedback, FlatList, ActivityIndicator, Modal, Image, Alert } from "react-native";
+import React, { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { Platform, SafeAreaView, StatusBar, StyleSheet, Text, View, TouchableWithoutFeedback, FlatList, ActivityIndicator, Modal, Image, Alert, RefreshControl } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Header } from "../components/Header";
 import { Ticket, TicketProps } from "../components/Ticket";
@@ -9,96 +9,99 @@ import firebase from "../services/firebaseconnection";
 import moment from "moment";
 import { useNavigation } from "@react-navigation/core";
 import { CreditCard } from "../components/CreditCard";
-import { getUser } from "../services/user.DAO";
-import { colors } from "../layout";
+import { loadSession } from "../services/asyncAuth";
 
+export interface CreditCardProps {
+    data: {
+        code: string,
+        name: string,
+        validity: string,
+        segureKey: string,
+    }
+}
 
 export interface UserProps {
     uuid?: string,
     name: string,
     cpf: string,
+    email: string,
     age: number,
     phone: string,
     credit_Limit: number,
     wallet_Balance: number,
     tickets?: TicketProps[]
+    creditCards?: CreditCardProps[];
 
 }
 
 export function Home() {
     moment.locale("pt-br")
 
-    const [user, setUser] = useState<UserProps>();
+    const [user, setUser] = useState<UserProps>()
     const [loading, setLoading] = useState(true);
     const [userUid, setUserUid] = useState("")
-    const [creditCards, setCreditCards] = useState<any[]>();
-    const [tickets, setTickets] = useState<TicketProps[]>()
+    const [creditCards, setCreditCards] = useState<CreditCardProps[]>([]);
+    const [tickets, setTickets] = useState<TicketProps[]>([])
 
     const [showHealthModal, setShowHealthModal] = useState(false);
 
     const navigation = useNavigation()
 
-    useEffect(() => {
+    const [refreshing, setRefreshing] = useState(false);
+
+    useLayoutEffect(() => {
         async function getUser() {
-            let userData = await firebase.auth().currentUser;
-            console.log("user: " + userData);
-        }
-        getUser()
-    }, [])
-    async function loadCreditCards() {
-        await firebase.database().ref(`users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/creditCards`).on("value", (snapshot) => {
-            const data: any = []
-            snapshot.forEach((childItem) => {
-                data.push({
-                    name: childItem.val().name,
-                    code: childItem.val().code,
-                    validity: childItem.val().validity,
-                    segureKey: childItem.val().segureKey,
-                })
-            })
-            setCreditCards(data)
-        })
-    }
-
-    useEffect(() => {  
-        async function loadData() {
-            await firebase.database().ref(`users/n4IAC9cWAjMUE7HkTG0sxdXV67u1`).on("value", (snapshot) => {
-                const userData = {
-                    uuid: userUid,
-                    name: snapshot.val().name,
-                    cpf: snapshot.val().cpf,
-                    age: Number(snapshot.val().age),
-                    phone: snapshot.val().phone,
-                    credit_Limit: Number(snapshot.val().credit_limit),
-                    wallet_Balance: Number(snapshot.val().wallet_balance),
-                }
-                setUser(userData);
-            })
-
-
-            async function loadTickets() {
-                const ticketsData: TicketProps[] = []
-                setTickets([])
-                await firebase.database().ref("users/n4IAC9cWAjMUE7HkTG0sxdXV67u1/tickets").on("value", (snapshot) => {
-                    snapshot.forEach((childItem) => {
-                        let data: TicketProps = {
-                            id: "" + Math.random(),
-                            place: childItem.val().place,
-                            value: Number(childItem.val().value),
-                            validity: childItem.val().validity,
-                        }
-                        ticketsData.push(data)
-                    })
-                    setTickets(ticketsData)
-                    setLoading(false);
-                })
+            const data = await loadSession();
+            console.log(data)
+            if (data !== undefined) {
+                setUser(data);
             }
-            loadTickets();
         }
-        loadData();
-        loadCreditCards();
-
+        getUser();
     }, [])
+
+    useEffect(() => {
+        async function getCreditCards() {
+            await firebase.database().ref(`users/${user?.uuid}/creditCards`).on("value", (snapshot) => {
+                // console.log(snapshot)
+                const data: any[] = []
+                snapshot.forEach((childItem) => {
+                    setCreditCards(state => [...state,
+                    {
+                        data: {
+                            name: childItem.val().name,
+                            code: childItem.val().code,
+                            validity: childItem.val().validity,
+                            segureKey: childItem.val().segureKey,
+                        }
+                    }
+                    ])
+                })
+            })
+        }
+        getCreditCards();
+    }, [user])
+
+    useEffect(() => {
+        async function getTickets() {
+            setTickets([])
+            await firebase.database().ref(`users/${user?.uuid}/tickets`).on("value", (snapshot) => {
+                snapshot.forEach((childItem) => {
+                    setTickets(state => [...state,
+                    {
+                        id: "" + Math.random(),
+                        place: childItem.val().place,
+                        value: Number(childItem.val().value),
+                        validity: childItem.val().validity,
+                    }
+                    ])
+                })
+
+            })
+            setLoading(false)
+        }
+        getTickets();
+    }, [user])
 
     if (loading) {
         return (
@@ -111,6 +114,7 @@ export function Home() {
     } else {
         return (
             <SafeAreaView style={styles.container}>
+
                 <Modal
                     style={styles.healthModal}
                     visible={showHealthModal}
@@ -164,7 +168,7 @@ export function Home() {
                         <View style={styles.smartwatchContainer}>
                             <TouchableOpacity
                                 style={styles.smartwatch}
-                                onPress={() => { alert("pagina da pulseira") }}>
+                                onPress={() => { navigation.navigate("Dispositivo")}}>
                                 <Ionicons
                                     name='watch-outline'
                                     size={40}
@@ -187,17 +191,18 @@ export function Home() {
                         <View style={styles.creditCardContainer}>
                             <Text style={styles.title}>Meus cartões</Text>
                             <View style={styles.creditCardList}>
-                                <FlatList
-                                    data={creditCards}
-                                    keyExtractor={(item) => item.code}
-                                    renderItem={({ item }) => (
+                                {creditCards && (
+                                    <FlatList
+                                        data={creditCards}
+                                        keyExtractor={(item) => item.data.code}
+                                        renderItem={({ item }) => (
 
-                                        <CreditCard data={item} />
+                                            <CreditCard data={item.data} />
 
-                                    )}
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}
-                                />
+                                        )}
+                                        horizontal
+                                        showsHorizontalScrollIndicator={false}
+                                    />)}
                             </View>
                         </View>
 
@@ -212,16 +217,18 @@ export function Home() {
                         </View>
                         <View style={styles.ticketsContainer}>
                             <Text style={[styles.title, { marginBottom: 10 }]}>Meus tickets</Text>
-                            <FlatList
-                                style={styles.ticketsList}
-                                data={tickets}
-                                keyExtractor={(item) => item.id}
-                                renderItem={({ item }) => (
-                                    <Ticket
-                                        {...item}
-                                    />
-                                )}
-                            />
+                            {tickets && (
+                                <FlatList
+                                    style={styles.ticketsList}
+                                    data={tickets}
+                                    keyExtractor={(item) => item.id}
+                                    renderItem={({ item }) => (
+                                        <Ticket
+                                            {...item}
+                                        />
+                                    )}
+                                />
+                            )}
                         </View>
                         <TouchableOpacity
                             style={styles.smartwatch}

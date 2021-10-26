@@ -6,6 +6,7 @@ import { SignUp } from "../pages/SignUp";
 import { User } from "../pages/User";
 import Wallet from "../pages/Wallet";
 import TicketsShop from "../pages/TicketsShop";
+import { Dispositivo } from "../pages/Dispositivo";
 const stackRoutes = createStackNavigator();
 
 const AppRoutes: React.FC = () => {
@@ -40,6 +41,10 @@ const AppRoutes: React.FC = () => {
             <stackRoutes.Screen
                 name="TicketsShop"
                 component={TicketsShop}
+            />
+            <stackRoutes.Screen
+                name="Dispositivo"
+                component={Dispositivo}
             />
 
         </stackRoutes.Navigator>

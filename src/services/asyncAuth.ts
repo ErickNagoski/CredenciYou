@@ -1,12 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserProps } from "../pages/Home";
 
 export interface SessionProps{
     email:"string",
     password:"string",
 }
 
-export async function saveSession(email: string, password: string, uuid:any) {
-    let storageSession = [email, password, uuid];
+export async function saveSession(user: UserProps) {
+    let storageSession = user;
     
     //transforma a lista em String JSON novamente
     const jsonString = (JSON.stringify(storageSession))
@@ -16,7 +17,7 @@ export async function saveSession(email: string, password: string, uuid:any) {
     console.log("salvo")
 }
 
-export async function loadSession(): Promise<SessionProps> {
+export async function loadSession(): Promise<UserProps> {
     //Recupera a lista salva
     let storageSession;
     try {
